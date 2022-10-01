@@ -1,0 +1,49 @@
+
+#### Will using 4 nodes cluster using ubuntu 18.04 and one vm as Bastion server 
+
+192.168.246.101  master-1.home.lab
+192.168.246.102  master-2.home.lab
+192.168.246.103  worker-1.home.lab
+192.168.246.104  worker-2.home.lab
+192.168.246.100  bastion-server
+
+
+
+bastion $ssh-keygen 
+bastion $ssh-copy-id root@node1  root@node2   root@node3   root@node4
+bastion $apt  git python3  python3-pip  
+
+## choose version  2.11
+bastion $git clone -b release-2.11  https://github.com/kubernetes-sigs/kubespray.git
+
+bastion $cd kubespray
+        $pip3 install -r requirements.txt 
+        $cp -rfp inventory/sample  inventory/mycluster 
+
+## Update Ansible Inventory file 
+$declare -a IPS=(192.168.246.101 192.168.246.102 192.168.246.103 192.168.246.104)
+$CONFIG_FILE=inventory/mycluster/hosts.yaml python3 contrib/inventory_builder/inventory.py ${IPS[@]}
+
+$vi inventory/mycluster/hosts.yml 
+'
+nodes distrubtions
+'
+$vi inventory/mycluster/group_vars/all/all.yml 
+'
+LB
+'
+$vi inventory/mycluster/group_vars/k8s-cluster/k8s-cluster.yml 
+'
+kubernetes version
+'
+$ansible-playbook -i inventory/mycluster/hosts.yml --user root cluster.yml 
+$mkdir .kube 
+$ scp root@192..168.246.101:/etc/kubernetes/admin.conf  .kube/config 
+$kubectl get nodes
+'
+node1           Ready       master
+node2           Ready       master
+node3           Ready       <none>
+node4           Ready       <none>
+'
+
