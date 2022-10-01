@@ -19,3 +19,20 @@ NAME             PROVISIONER               AGE
 standard         kubernetes.io/gce-pd      1d
 gold (default)   kubernetes.io/gce-pd      1d
 '
+==============================================================
+
+## run deplyment nginx with replica 3
+$kubectl   --namespace=default  run  nginx   --image=nginx    --replicas=3  --port=80
+$kubectl get pods -o wide
+$kubectl get deployment 
+
+###Create a service for type Load Balancer:
+$kubectl  expose  deployment  nginx   --port=80    --type=LoadBalancer
+$kubctl get services
+
+#Describe the nginx service:
+$kubectl describe svc nginx
+
+#Invoke the service endpoit with curl
+$curl 10.224.1.5
+===================================================
