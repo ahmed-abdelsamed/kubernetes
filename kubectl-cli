@@ -1,0 +1,21 @@
+kubectl get storageclass
+'
+NAME                 PROVISIONER               AGE
+standard (default)   kubernetes.io/gce-pd      1d
+gold                 kubernetes.io/gce-pd      1d
+'
+## To mark a StorageClass as non-default, you need to change its value to false:
+kubectl patch storageclass standard -p '{"metadata": {"annotations":{"storageclass.kubernetes.io is-default-class":"false"}}}'
+
+## Mark a StorageClass as default:
+kubectl patch storageclass gold -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+Please note that at most one StorageClass can be marked as default. If two or more of them are marked as default, a PersistentVolumeClaim without storageClassName explicitly specified cannot be created.
+
+## Verify that your chosen StorageClass is default:
+kubectl get storageclass
+'
+NAME             PROVISIONER               AGE
+standard         kubernetes.io/gce-pd      1d
+gold (default)   kubernetes.io/gce-pd      1d
+'
