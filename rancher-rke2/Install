@@ -1,0 +1,34 @@
+#### #Server Node Installation
+$curl -sfL https://get.rke2.io | sh -
+
+$systemctl enable rke2-server.service
+
+$systemctl start rke2-server.service
+
+$journalctl -u rke2-server -f
+
+$vi .bashrc
+export PATH=$PATH:/var/lib/rancher/rke2/bin/
+
+
+A token that can be used to register other server or agent nodes will be created at 
+/var/lib/rancher/rke2/server/node-token
+
+A kubeconfig file will be written to /etc/rancher/rke2/rke2.yaml.
+$cp -p /etc/rancher/rke2/rke2.yaml .kube/config
+
+##### On Agent
+$curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="agent" sh -
+
+$systemctl enable rke2-agent.service
+
+mkdir -p /etc/rancher/rke2/
+vim /etc/rancher/rke2/config.yaml
+
+server: https://<server>:9345
+token: <token from server node>
+
+
+$systemctl start rke2-agent.service
+
+$journalctl -u rke2-agent -f
