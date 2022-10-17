@@ -44,7 +44,7 @@ haproxy$ apt install  git python3  python3-pip
 bastion $git clone -b release-2.11  https://github.com/kubernetes-sigs/kubespray.git
 
 bastion $cd kubespray
-        $pip3 install -r requirements.txt 
+        $pip3.9 install -r requirements.txt 
         $cp -rfp inventory/sample  inventory/mycluster 
 
 ## Update Ansible Inventory file 
