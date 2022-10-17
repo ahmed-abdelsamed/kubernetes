@@ -1,9 +1,17 @@
 {https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html}
 ## prerequisites: 
-1- kubernetes 1.24.6
-2- Ansible 2.12.9
-3- kubespray v2.20.0
-
+kubernetes 1.24.6 using kubespray v2.20.0
+1- ansible==5.7.1
+2- ansible-core==2.12.5
+3- cryptography==3.4.8
+4- jinja2==2.11.3
+5- netaddr==0.7.19
+6- pbr==5.4.4
+7- jmespath==0.9.5
+8- ruamel.yaml==0.16.10
+9- ruamel.yaml.clib==0.2.6
+10- MarkupSafe==1.1.1
+----------------------------------------
 ### On service machine
 sudo dnf  -y update
 sudo reboot
@@ -106,11 +114,10 @@ $kubectl get nodes
 '
 '
 ===========================================================
-  
- =========================================
+## Install kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+===================================
 
-==========================
-vi inventory/mycluster/group_vars/all/all.yml
-'
 
-'
