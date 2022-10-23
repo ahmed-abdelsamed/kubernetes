@@ -1,0 +1,128 @@
+nano /etc/named.conf
+Comment out the following lines:
+
+//listen-on port 53 { 127.0.0.1; };
+//listen-on-v6 port 53 { ::1; };
+
+allow-query     { localhost; 172.16.16.0/24; };
+
+ allow-transfer { none; };
+    forwarders {
+                8.8.8.8;
+                8.8.4.4;
+        };
+
+include "/etc/named/named.conf.local";
+
+-----------------------------------------
+
+nano etc/named/named.conf.local
+
+zone "home.lab" {
+    type master;
+    file "/etc/named/zones/db.home.lab";
+  };
+
+zone "16.16.172.in-addr.arpa" {
+
+    type master;
+    file "/etc/named/zones/db.172.16.16";
+};
+
+---------------------------------------------
+### Create Forward and Reverse Zone Files
+# mgr.home.lab is DNS server 
+
+
+[root@mgr ~]# vi /etc/named/zones/db.home.lab 
+
+'
+$TTL 1W
+@       IN      SOA     mgr.home.lab.   root (
+                        2019070700      ; serial
+                        3H              ; refresh (3 hours)
+                        30M             ; retry (30 minutes)
+                        2W              ; expiry (2 weeks)
+                        1W )            ; minimum (1 week)
+
+; Name Server Info
+@       IN      NS      mgr.home.lab.
+
+; IP address of Name Server
+mgr                     IN      A       172.16.16.8
+
+; A - Record Hostname to IP Address
+helper.home.lab.        IN      A       172.16.16.8
+helper.ocp4.home.lab.   IN      A       172.16.16.8
+;
+api.ocp4.home.lab.      IN      A       172.16.16.8
+api-int.ocp4.home.lab.  IN      A       172.16.16.8
+;
+*.apps.ocp4.home.lab.   IN      A       172.16.16.8
+;
+bootstrap.ocp4.home.lab. IN     A       172.16.16.100
+;
+master0.ocp4.home.lab.  IN      A       172.16.16.101
+master1.ocp4.home.lab.  IN      A       172.16.16.102
+master2.ocp4.home.lab.  IN      A       172.16.16.103
+;
+worker0.ocp4.home.lab.  IN      A       172.16.16.104
+worker1.ocp4.home.lab.  IN      A       172.16.16.105
+;
+;EOF
+
+'
+[root@mgr ~]# vi /etc/named/zones/db.172.16.16 
+'
+
+$TTL 1W
+@       IN      SOA     mgr.home.lab.   root (
+                        2019070700      ; serial
+                        3H              ; refresh (3 hours)
+                        30M             ; retry (30 minutes)
+                        2W              ; expiry (2 weeks)
+                        1W )            ; minimum (1 week)
+;
+; name servers - NS records
+@                               IN      NS      mgr.home.lab.
+
+; PTR Records
+8.16.16.172.in-addr.arpa.       IN      PTR     mgr.home.lab
+8.16.16.172.in-addr.arpa.       IN      PTR     api.ocp4.home.lab.
+8.16.16.172.in-addr.arpa.       IN      PTR     api-int.ocp4.home.lab.
+;
+100.16.16.172.in-addr.arpa.     IN      PTR     bootstrap.ocp4.home.lab.
+;
+101.16.16.172.in-addr.arpa.     IN      PTR     master0.ocp4.home.lab.
+102.16.16.172.in-addr.arpa.     IN      PTR     master1.ocp4.home.lab.
+103.16.16.172.in-addr.arpa.     IN      PTR     master2.ocp4.home.lab.
+;
+104.16.16.172.in-addr.arpa.     IN      PTR     worker0.ocp4.home.lab.
+105.16.16.172.in-addr.arpa.     IN      PTR     worker1.ocp4.home.lab.
+;
+;EOF
+
+'
+
+
+
+[root@mgr ~]# named-checkzone home.lab /etc/named/zones/db.home.lab 
+zone home.lab/IN: loaded serial 2019070700
+OK
+
+
+[root@mgr ~]# named-checkzone 16.16.172.in-addr.arpa  /etc/named/zones/db.172.16.16 
+zone 16.16.172.in-addr.arpa/IN: loaded serial 2019070700
+OK
+
+
+### Verify DNS Server
+
+[root@mgr ~]# dig +noall +answer @172.16.16.8  api.ocp4.home.lab
+api.ocp4.home.lab.      604800  IN      A       172.16.16.8
+[root@mgr ~]# dig +noall +answer @172.16.16.8  master0.ocp4.home.lab
+master0.ocp4.home.lab.  604800  IN      A       172.16.16.101
+[root@mgr ~]# dig +noall +answer @172.16.16.8  master1.ocp4.home.lab
+master1.ocp4.home.lab.  604800  IN      A       172.16.16.102
+
+=====================================
