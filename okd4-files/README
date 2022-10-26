@@ -1,0 +1,4 @@
+1- deploy OKD4 services:
+  a) DNS  via named/bind 
+  b) HAProxy LB
+  c) Nging webserver
