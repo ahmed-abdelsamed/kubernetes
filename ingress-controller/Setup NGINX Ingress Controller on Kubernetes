@@ -136,4 +136,24 @@ spec:
             port:
               number: 80
 ---
+[root@helper hello-world]# k create ns hello-world
+root@helper hello-world]# k create -f hello.yaml -n hello-world
+deployment.apps/hello-world created
+service/hello-world created
+ingress.networking.k8s.io/hello-world created
+[root@helper hello-world]# k get pods
+No resources found in default namespace.
+
+[root@helper hello-world]# k get ing -n hello-world
+NAME          CLASS   HOSTS                     ADDRESS          PORTS   AGE
+hello-world   nginx   hello.apps.ocp.home.lab   192.168.126.40   80      28s
+[root@helper hello-world]# k get pods -n hello-world
+NAME                          READY   STATUS              RESTARTS   AGE
+hello-world-9b7986c7c-m5ncp   0/1     ContainerCreating   0          64s
+
+[root@helper hello-world]# k get pods -n hello-world
+NAME                          READY   STATUS    RESTARTS   AGE
+hello-world-9b7986c7c-m5ncp   1/1     Running   0          11m
+[root@helper hello-world]#
+---------------------------
 source: https://platform9.com/blog/building-a-complete-stack-ingress-controllers/
