@@ -108,3 +108,7 @@ kubectl port-forward deploy/hello-eks-a 8000:80
 
 curl localhost:8000
 ========================================
+# add .profile
+export KUBECONFIG=/home/ahmed/eks-cluster/mgmt/mgmt-eks-a-cluster.kubeconfig
+
+===================================================
