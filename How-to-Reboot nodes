@@ -1,0 +1,19 @@
+########### Reboot nodes
+Cordon the node so no further workloads are scheduled to run on it:
+
+$kubectl cordon <node-name>
+
+Drain the node of all current workloads:
+
+$kubectl drain <node-name>
+
+Shut down. Using the appropriate method for your provider, shut down the node.
+
+Perform system maintenance or other task you need to do on the node and boot up the node.
+
+Uncordon the node so that it can begin receiving workloads again.
+
+$kubectl uncordon <node-name>
+
+=================================================================
+
