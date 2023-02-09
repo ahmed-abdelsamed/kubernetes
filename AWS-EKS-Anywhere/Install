@@ -1,0 +1,110 @@
+## On ubuntu 20.04
+
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+brew install aws/tap/eks-anywhere
+
+
+export OS="$(uname -s | tr A-Z a-z)" ARCH=$(test "$(uname -m)" = 'x86_64' && echo 'amd64' || echo 'arm64')
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/${OS}/${ARCH}/kubectl"
+sudo mv ./kubectl /usr/local/bin
+sudo chmod +x /usr/local/bin/kubectl
+
+brew update
+brew upgrade eks-anywhere
+
+###Create a standalone cluster
+CLUSTER_NAME=mgmt
+eksctl anywhere generate clusterconfig $CLUSTER_NAME \
+   --provider docker > $CLUSTER_NAME.yaml
+
+----------------------------
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+   name: mgmt
+spec:
+   clusterNetwork:
+      cniConfig:
+         cilium: {}
+      pods:
+         cidrBlocks:
+            - 192.168.0.0/16
+      services:
+         cidrBlocks:
+            - 10.96.0.0/12
+   controlPlaneConfiguration:
+      count: 1
+   datacenterRef:
+      kind: DockerDatacenterConfig
+      name: mgmt
+   externalEtcdConfiguration:
+      count: 1
+   kubernetesVersion: "1.24"
+   managementCluster:
+      name: mgmt
+   workerNodeGroupConfigurations:
+      - count: 1
+         name: md-0
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: DockerDatacenterConfig
+metadata:
+   name: mgmt
+spec: {}
+---------------------------------------
+eksctl anywhere create cluster -f $CLUSTER_NAME.yaml
+----
+Performing setup and validations
+✅ validation succeeded {"validation": "docker Provider setup is valid"}
+Creating new bootstrap cluster
+Installing cluster-api providers on bootstrap cluster
+Provider specific setup
+Creating new workload cluster
+Installing networking on workload cluster
+Installing cluster-api providers on workload cluster
+Moving cluster management from bootstrap to workload cluster
+Installing EKS-A custom components (CRD and controller) on workload cluster
+Creating EKS-A CRDs instances on workload cluster
+Installing GitOps Toolkit on workload cluster
+GitOps field not specified, bootstrap flux skipped
+Deleting bootstrap cluster
+🎉 Cluster created!
+----------------------------------------------------------------------------------
+The Amazon EKS Anywhere Curated Packages are only available to customers with the
+Amazon EKS Anywhere Enterprise Subscription
+----------------------------------------------------------------------------------
+Installing curated packages controller on management cluster
+secret/aws-secret created
+job.batch/eksa-auth-refresher created
+----
+export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
+kubectl get ns
+
+---
+NAME                                STATUS   AGE
+capd-system                         Active   21m
+capi-kubeadm-bootstrap-system       Active   21m
+capi-kubeadm-control-plane-system   Active   21m
+capi-system                         Active   21m
+capi-webhook-system                 Active   21m
+cert-manager                        Active   22m
+default                             Active   23m
+eksa-packages                       Active   23m
+eksa-system                         Active   20m
+kube-node-lease                     Active   23m
+kube-public                         Active   23m
+kube-system                         Active   23m
+---
+
+###Deploy test workload
+kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
+
+kubectl get pods -l app=hello-eks-a
+
+kubectl logs -l app=hello-eks-a
+
+kubectl port-forward deploy/hello-eks-a 8000:80
+
+curl localhost:8000
+========================================
