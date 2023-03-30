@@ -1,5 +1,7 @@
 https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/
 
+deploy as deamonset 
+
 Exposing the NGINX Ingress Controller
 
 Once the base configuration is in place, 
