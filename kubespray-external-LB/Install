@@ -12,6 +12,7 @@ kubernetes 1.24.6 using kubespray v2.20.0
 9- ruamel.yaml.clib==0.2.6
 10- MarkupSafe==1.1.1
 ----------------------------------------
+# On all nodes turonoff swap
 ### On service machine
 sudo dnf  -y update
 sudo reboot
