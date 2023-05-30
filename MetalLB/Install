@@ -1,0 +1,56 @@
+### MetalLB
+kubectl edit configmap -n kube-system kube-proxy
+
+and set:
+
+'
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: "ipvs"
+ipvs:
+  strictARP: true
+'
+OR
+# see what changes would be made, returns nonzero returncode if different
+kubectl get configmap kube-proxy -n kube-system -o yaml | \
+sed -e "s/strictARP: false/strictARP: true/" | \
+kubectl diff -f - -n kube-system
+
+---------------------------------------------
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.9/config/manifests/metallb-native.yaml
+
+---------------------------------------------
+$vi /tmp/ipaddresspool.yaml
+'
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: first-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - 192.168.6.250-192.168.6.253
+'
+
+$vi /tmp/l2advertisement.yaml
+'
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: example
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - first-pool
+'
+
+$ k create -f ipAddressPools.yaml 
+$ k create -f l2advertisement.yaml 
+
+$k get ipaddresspool.metallb.io -A 
+$k get l2advertisements.metallb.io -A 
+
+================================================
+## Example
+$ k create deploy nginx --image nginx 
+$ k expose deploy nginx --port 80 --type LoadBalancer
