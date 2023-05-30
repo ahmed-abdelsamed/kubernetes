@@ -97,3 +97,7 @@ spec:
 curl -Lk nginx.example.com 
 'SSL certificatd '
 
+
+k get secret -n cert-manager
+NAME                                 TYPE                 DATA   AGE
+letsencrypt-staging                  Opaque               1      29m
