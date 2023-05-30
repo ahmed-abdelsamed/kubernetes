@@ -1,0 +1,61 @@
+{https://kubernetes.github.io/ingress-nginx/deploy/}
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.7.1/deploy/static/provider/cloud/deploy.yaml
+
+kubectl get pods --namespace=ingress-nginx
+
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+
+kubectl get service ingress-nginx-controller --namespace=ingress-nginx
+--------------------------------------------------------------
+# Example:
+'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: nginx
+  name: nginx-deploy-main
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: nginx-main
+  template:
+    metadata:
+      labels:
+        run: nginx-main
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+'
+k expose deploy/nginx-deploy-main --port 80
+
+'
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-resource-1
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: demo.apps.cofee.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-deploy-main
+            port: 
+              number: 80
+'
+k create -f ingress-resource-1.yaml
+
+k describe ing ingress-resource-1
+
+------------------------------------------------------
