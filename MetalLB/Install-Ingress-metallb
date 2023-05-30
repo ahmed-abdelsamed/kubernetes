@@ -59,3 +59,5 @@ k create -f ingress-resource-1.yaml
 k describe ing ingress-resource-1
 
 ------------------------------------------------------
+## Commands
+curl -kivL -H 'Host: www.demo.apps.cofee.com' 'http://192.168.6.251'
