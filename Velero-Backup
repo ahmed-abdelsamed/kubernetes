@@ -1,0 +1,87 @@
+### Running minio container
+```
+docker pull minio/minio
+docker run --name minio -p 9000:9000 -v data:/data minio/minio server /data
+```
+
+### Grab access and secret key
+/data/.minio.sys/config/config.json
+```
+docker exec -it minio cat /data/.minio.sys/config/config.json | egrep "(access|secret)_key"
+```
+Change access key and secret key from the Minio dashboard.
+
+### Download Velero 1.0.0 Release
+```
+wget https://github.com/heptio/velero/releases/download/v1.0.0/velero-v1.0.0-linux-amd64.tar.gz
+tar zxf velero-v1.0.0-linux-amd64.tar.gz
+sudo mv velero-v1.0.0-linux-amd64/velero /usr/local/bin/
+rm -rf velero*
+
+```
+
+### Create credentials file (Needed for velero initialization)
+```
+cat <<EOF>> minio.credentials
+[default]
+aws_access_key_id=minio
+aws_secret_access_key=minio123
+EOF
+```
+
+### Install Velero in the Kubernetes Cluster
+```
+velero install \
+   --provider aws \
+   --bucket kubedemo \
+   --secret-file ./minio.credentials \
+   --backup-location-config region=minio,s3ForcePathStyle=true,s3Url=http://<ip>:9000
+```
+
+### Enable tab completion for preferred shell
+```
+source <(velero completion zsh)
+```
+----------------------
+velero backup-location get 
+velero backup get
+
+## Example
+kubectl -n testing run nginx --image nginx --replicas 2
+kubectl -n velero get backups
+velero backup create firstbackup --include-namespaces testing 
+kubectl -n velero get backups
+'firstbackup'
+
+velero backup get 
+'firstbackup'
+velero backup describe firstbackup
+
+## Testing
+kubectl delete ns testing
+
+velero  restore get
+
+velero restore create firstbackup-restore1 --from-backup firstbackup
+velero restore describe firstbackup-restore1 | less
+
+#delete restore
+velero restore delete firstbackup-restor1
+
+## schedule
+velero schedule get 
+
+velero schedule create firstschedule --schedule="* * * * *"
+velero schedule create firstschedule --schedule="@every 2m"
+velero schedule create firstschedule --schedule="@every 2h"
+"@every 1d" or 1w or 2d
+
+
+velero schedule create firstschedule --schedule="@every 1m"  --include-namesapces testing 
+
+velero schedule delete --all
+
+# create backup with live expire 2h
+velero backup create secondbackup --include-namespaces kube-system --ttl 2h
+
+==============================================================
