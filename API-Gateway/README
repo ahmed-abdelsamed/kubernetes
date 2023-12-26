@@ -1,1 +1,178 @@
+Topic:
+1- What is API Gareway?
+2- Example of API gateway by Envoy Gateway.
+
+The Kubernetes Gateway API is the first step toward adding additional control over ingress patterns directly in Kubernetes. It represents a new standard in defining how to configure and manage how traffic is defined and routed in Kubernetes. This extensible API is a collection of resources that models a network of services in Kubernetes and provides  a standard way to describe how inbound traffic routes can be defined. The Gateway API consists of three new resources to define.
+
+GatewayClass: This exists at a cluster level to describe the set of common configurations and behaviors for a set of Gateways.
+Gateway: A gateway defines how traffic can connect to the services that exist in the cluster.
+Routes: These describe how to map incoming requests to the services. These can be defined as HTTPRoute, TLSRoute, TCPRoute/UDPRoute or GRPCRoute.
+
+API Gareway Functions:
+
+1. Client Request Handling: The API Gateway receives HTTP requests from various client devices and applications.
+
+2. Request Validation: It checks that the incoming requests are well-formed and have correct format and necessary parameters.
+
+3. Access Control Lists: It implements allow-lists and deny-lists to control access to various services, preventing unauthorized requests from proceeding.
+
+4. Authentication and Authorization: It interacts with authentication services to verify the identity of the requester and checks permissions to ensure they are authorized to access the requested resources.
+
+5. Rate Limiting: It applies predefined rules to limit the number of requests a client can make within a certain time frame to prevent abuse and manage load.
+
+6. Service Discovery: It identifies the appropriate services required to fulfill the request based on the request path, parameters, or headers.
+
+7. Dynamic Routing: It directs the validated and authorized requests to the correct backend services.
+
+8. Protocol Translation: It converts the request from the web-friendly protocols like HTTP/HTTPS to the specific protocols used by the backend services, if necessary.
+
+9. Error Handling: It catches and handles any errors that may arise during the processing of requests, ensuring graceful degradation of service.
+
+10. Circuit Breaking: It implements patterns to detect failures and prevent overloading the system, avoiding cascading failures in interconnected services.
+
+11. Monitoring and Logging: It utilizes tools like the ELK stack for logging requests and responses, which is crucial for monitoring, tracing, and debugging.
+
+12. Caching: It optionally stores responses to common requests, reducing the number of calls to the backend services.
+========================================================
+#### Example of API gateway by Envoy Gateway:
+# Install Envoy Gateway
+kubectl apply -f https://github.com/envoyproxy/gateway/releases/download/v0.2.0/install.yaml
+
+This creates a lot of resources; I’ll address them in a couple sections. First, Gateway API:
+
+customresourcedefinition.apiextensions.k8s.io/gatewayclasses.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/gateways.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/httproutes.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/referencegrants.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/referencepolicies.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/tcproutes.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/tlsroutes.gateway.networking.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/udproutes.gateway.networking.k8s.io created
+namespace/gateway-system created
+validatingwebhookconfiguration.admissionregistration.k8s.io/gateway-api-admission created
+service/gateway-api-admission-server created
+deployment.apps/gateway-api-admission-server created
+serviceaccount/gateway-api-admission created
+clusterrole.rbac.authorization.k8s.io/gateway-api-admission created
+clusterrolebinding.rbac.authorization.k8s.io/gateway-api-admission created
+role.rbac.authorization.k8s.io/gateway-api-admission created
+rolebinding.rbac.authorization.k8s.io/gateway-api-admission created
+job.batch/gateway-api-admission created
+job.batch/gateway-api-admission-patch created
+
+$ kubectl get pods --namespace gateway-system
+NAME                                        	READY   STATUS  	RESTARTS   AGE
+gateway-api-admission-2dhk5                 	0/1 	Completed          0       70s
+gateway-api-admission-patch-dbdbc           	0/1 	Completed          1       70s
+gateway-api-admission-server-68485ffc97-gt8v4   1/1 	Running 	   0       70s
+
+$ kubectl api-resources | grep gateway.networking
+gatewayclasses                	gc       	gateway.networking.k8s.io/v1beta1  	false    	GatewayClass
+gateways                      	gtw      	gateway.networking.k8s.io/v1beta1  	true     	Gateway
+httproutes                                 	gateway.networking.k8s.io/v1beta1  	true     	HTTPRoute
+referencegrants               	refgrant 	gateway.networking.k8s.io/v1alpha2 	true     	ReferenceGrant
+referencepolicies             	refpol   	gateway.networking.k8s.io/v1alpha2 	true     	ReferencePolicy
+tcproutes                                  	gateway.networking.k8s.io/v1alpha2 	true     	TCPRoute
+tlsroutes                                  	gateway.networking.k8s.io/v1alpha2 	true     	TLSRoute
+udproutes                                  	gateway.networking.k8s.io/v1alpha2 	true     	UDPRoute
+
+kubectl get pods --namespace envoy-gateway-system
+NAME                        	READY   STATUS	RESTARTS   AGE
+envoy-gateway-dc74c4d97-pntbj   2/2 	Running    0       35s
+
+# Install a Test App
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
+serviceaccount/httpbin created
+service/httpbin created
+deployment.apps/httpbin created
+
+$ kubectl get pods -n default
+NAME                    	READY   STATUS	RESTARTS   AGE
+httpbin-9dbd644c7-fhtw5 	1/1 	Running    0       4m16s
+
+#Configure Envoy Gateway
+
+$ kubectl apply -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: GatewayClass
+metadata:
+  name: my-envoy-gateway
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+EOF
+
+gatewayclass.gateway.networking.k8s.io/eg created
+
+$ kubectl get gatewayclass -o wide
+NAME   CONTROLLER                                  	ACCEPTED   AGE 	   DESCRIPTION
+eg 	gateway.envoyproxy.io/gatewayclass-controller   True   	   2m38s  
+
+$ kubectl apply -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: insecure-port
+spec:
+  gatewayClassName: my-envoy-gateway
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 8080
+EOF
+
+$ kubectl -n default get gateway -o wide
+
+NAME        	CLASS             ADDRESS   READY   AGE
+insecure-port   my-envoy-gateway                    2m54s
+
+
+$ kubectl apply -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: httpbin
+spec:
+  parentRefs: [ {name: insecure-port} ]
+  hostnames: ["www.httpbin-svc.kcp.vcexpert.local"]
+  rules:
+    - matches:
+        - path: {type: PathPrefix, value: /}
+      backendRefs:
+        - {group: "", kind: Service, name: httpbin, port: 8000, weight: 1}
+EOF
+
+httproute.gateway.networking.k8s.io/httpbin created
+
+$ kubectlget httproute -n default -o wide
+NAME   	  HOSTNAMES         	AGE
+httpbin	  ["httpbin-svc.kcp.vcexpert.local"]   58s
+
+$ kubectl get pods -n envoy-gateway-system
+NAME                        	                READY   STATUS	  RESTARTS   AGE
+envoy-default-insecure-port-5879556bd4-r5ggw   	1/1 	Running      0       90s
+envoy-gateway-dc74c4d97-pntbj                   2/2 	Running      0       13m  
+
+
+curl --header "Host: www.httpbin-svc.kcp.vcexpert.local" 127.0.0.1:8080/headers
+HTTP/1.1 200 OK
+server: envoy
+content-type: application/json
+content-length: 175
+access-control-allow-origin: *
+access-control-allow-credentials: true
+x-envoy-upstream-service-time: 14
+
+{
+	"headers": {
+    	"Accept": "application/json, */*",
+    	"Host": "www.example.com",
+    	"User-Agent": "curl/7.79.1",
+    	"X-Envoy-Expected-Rq-Timeout-Ms": "15000"
+	}
+}
+
+
+
+
+
 
