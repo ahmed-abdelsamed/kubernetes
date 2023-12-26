@@ -1,0 +1,11 @@
+kind: HTTPRoute
+metadata:
+  name: httpbin
+spec:
+  parentRefs: [ {name: insecure-port} ]
+  hostnames: ["www.example.com"]
+  rules:
+    - matches:
+        - path: {type: PathPrefix, value: /}
+      backendRefs:
+        - {group: "", kind: Service, name: httpbin, port: 8000, weight: 1}
