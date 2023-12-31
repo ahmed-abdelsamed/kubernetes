@@ -8,4 +8,27 @@ Use Cases for Headless Services
 2.	Distributed Storage Systems: Headless services can also be employed to deploy distributed storage systems, such as Ceph or GlusterFS. These systems rely on multiple replicas and endpoints to ensure data durability and high availability.
 3.	Messaging Systems: Applications like Apache Kafka or RabbitMQ can benefit from headless services, as they require multiple brokers with individual IP addresses to maintain a distributed and fault-tolerant messaging system.
 
-  
+  ## Mongo STS with Headless
+
+[azchatbot@azure-linkdev ~]$ ks get pods -o wide
+NAME           READY  STATUS  RESTARTS  AGE  IP      NODE                 NOMINATED NODE  READINESS GATES
+mongo-0          1/1   Running  0     37m 10.244.4.13 aks-stgpoolapp-37294191-vmss000000  <none>      <none>
+mongo-1          1/1   Running  0     4m9s 10.244.4.15 aks-stgpoolapp-37294191-vmss000000  <none>      <none>
+mongo-2          1/1   Running  0     4m3s 10.244.0.35 aks-nodepoolsys-37834246-vmss000000  <none>      <none>
+nginx-0-769f4f94d-pwx77  1/1   Running  0     36m 10.244.4.14 aks-stgpoolapp-37294191-vmss000000  <none>      <none>
+
+[azchatbot@azure-linkdev ~]$ ks get svc
+NAME    TYPE    CLUSTER-IP  EXTERNAL-IP  PORT(S)   AGE
+mongo-svc  ClusterIP  None     <none>    27017/TCP  36m
+
+# Lookup by service (round robin)
+root@nginx-0-769f4f94d-pwx77:/# nslookup mongo-svc
+Server: 10.0.0.10
+Address: 10.0.0.10#53
+
+Name:  mongo-svc.test-ns.svc.cluster.local
+Address: 10.244.4.13
+Name:  mongo-svc.test-ns.svc.cluster.local
+Address: 10.244.0.35
+Name:  mongo-svc.test-ns.svc.cluster.local
+Address: 10.244.4.15
