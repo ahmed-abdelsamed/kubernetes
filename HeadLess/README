@@ -32,3 +32,16 @@ Name:  mongo-svc.test-ns.svc.cluster.local
 Address: 10.244.0.35
 Name:  mongo-svc.test-ns.svc.cluster.local
 Address: 10.244.4.15
+
+
+## Access service (headless) from outside namespace by FQDN
+root@nginx-77b4fdf86c-jshvh:/# nslookup mongo-svc.test-ns.svc.cluster.local
+Server:         10.0.0.10
+Address:        10.0.0.10#53
+
+Name:   mongo-svc.test-ns.svc.cluster.local
+Address: 10.244.0.35
+Name:   mongo-svc.test-ns.svc.cluster.local
+Address: 10.244.4.15
+Name:   mongo-svc.test-ns.svc.cluster.local
+Address: 10.244.4.13
