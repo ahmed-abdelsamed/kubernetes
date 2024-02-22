@@ -1,0 +1,30 @@
+#!/bin/bash
+
+echo "[TASK 1] Disable and turn off SWAP"
+sed -i '/swap/d' /etc/fstab
+swapoff -a
+
+echo "[TASK 2] Stop and Disable firewall"
+systemctl disable --now firewalld  >/dev/null 2>&1
+
+
+# Enable ssh password authentication
+echo "Enable ssh password authentication"
+sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sed -i 's/.*PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+systemctl reload sshd
+
+# Set Root password
+echo "Set root password"
+echo -e "r00t\nr00t" | passwd root >/dev/null 2>&1
+
+# Update bashrc file
+echo "export TERM=xterm" >> /etc/bashrc
+
+
+echo "[TASK 10] Update /etc/hosts file"
+cat >>/etc/hosts<<EOF
+172.16.16.100   kmaster.example.com     kmaster
+172.16.16.101   kworker1.example.com    kworker1
+172.16.16.102   kworker2.example.com    kworker2
+EOF
