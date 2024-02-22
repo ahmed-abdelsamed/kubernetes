@@ -1,0 +1,71 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+ENV['VAGRANT_NO_PARALLEL'] = 'yes'
+
+Vagrant.configure(2) do |config|
+
+  config.vm.provision "shell", path: "bootstrap.sh"
+
+  NodeCount = 3
+
+  (1..NodeCount).each do |i|
+    config.vm.define "master#{i}" do |node|
+      node.vm.box = "generic/ubuntu2204"
+      node.vm.hostname = "master#{i}.linkdev.local"
+      node.vm.network "private_network", ip: "192.168.56.1#{i}"
+      node.vm.provider "virtualbox" do |v|
+        v.name = "master#{i}"
+        v.memory = 2048
+        v.cpus = 2
+      end
+      node.disksize.size = '20GB'
+    end
+  end
+
+end
+Vagrant.configure(2) do |config|
+
+  config.vm.provision "shell", path: "bootstrap.sh"
+
+  NodeCount = 2
+
+  (1..NodeCount).each do |i|
+    config.vm.define "worker#{i}" do |node|
+      node.vm.box = "generic/ubuntu2204"
+      node.vm.hostname = "worker#{i}.linkdev.local"
+      node.vm.network "private_network", ip: "192.168.56.2#{i}"
+      node.vm.provider "virtualbox" do |v|
+        v.name = "worker#{i}"
+        v.memory = 2048
+        v.cpus = 2
+      end
+      node.disksize.size = '20GB'
+    end
+  end
+
+end
+
+
+
+
+Vagrant.configure(2) do |config|
+
+  config.vm.provision "shell", path: "bootstrap.sh"
+
+  NodeCount = 1
+
+  (1..NodeCount).each do |i|
+    config.vm.define "bastion" do |node|
+      node.vm.box = "generic/ubuntu2204"
+      node.vm.hostname = "bastion.linkdev.local"
+      node.vm.network "private_network", ip: "192.168.56.50"
+      node.vm.provider "virtualbox" do |v|
+        v.name = "bastion"
+        v.memory = 1024
+        v.cpus = 1
+      end
+    end
+  end
+
+end
