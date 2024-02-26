@@ -1,0 +1,16 @@
+Solution 1 - Remove the keys from ~/.ssh/known_hosts file:
+
+$ ssh-keygen -R 192.168.122.144
+$ ssh-keygen -R 192.168.122.216
+
+
+Solution 2 - Configure the address range to not use host key checking:
+
+# ~/.ssh/config
+Host 192.168.100.*
+  UserKnownHostsFile=/dev/null
+
+
+Solution 3 - Disable host key checking while running k0sctl:
+
+$ env SSH_KNOWN_HOSTS=/dev/null k0sctl apply -c k0sctl.yaml
