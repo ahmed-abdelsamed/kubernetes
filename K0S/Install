@@ -1,0 +1,52 @@
+rm /etc/machine-id
+
+systemd-machine-id-setup
+
+
+wgte https://github.com/k0sproject/k0sctl/releases/download/v0.17.4/k0sctl-linux-x64
+
+ssh-keygen -t rsa -n 2048 -f ~/.ssh/id_rsa
+
+
+ k0sctl init > k0sctl.yaml
+# content in k0sctl.yaml
+
+env SSH_KNOWN_HOSTS=/dev/null K0sctl apply --config k0sctl.yaml
+
+mkdir ~/.kube
+k0sctl kubeconfig --config k0sctl.yaml > ~/.kube/config
+
+ks get nodes 
+[root@bastion opt]# ks get nodes
+NAME                    STATUS   ROLES    AGE   VERSION
+worker1.linkdev.local   Ready    <none>   41m   v1.29.2+k0s
+worker2.linkdev.local   Ready    <none>   41m   v1.29.2+k0s
+
+
+ks get pods -A
+[root@bastion opt]# ks get pods -A
+NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE
+default       nginx-7854ff8877-5qhhl            1/1     Running   0          5m21s
+default       nginx-7854ff8877-7pnfc            1/1     Running   0          5m21s
+default       nginx-7854ff8877-x69tl            1/1     Running   0          5m21s
+kube-system   coredns-555d98c87b-j5cjd          1/1     Running   0          41m
+kube-system   coredns-555d98c87b-rs5zj          1/1     Running   0          41m
+kube-system   konnectivity-agent-htddc          1/1     Running   0          41m
+kube-system   konnectivity-agent-v8kzx          1/1     Running   0          41m
+kube-system   kube-proxy-d565w                  1/1     Running   0          41m
+kube-system   kube-proxy-flgq4                  1/1     Running   0          41m
+kube-system   kube-router-9f4sq                 1/1     Running   0          41m
+kube-system   kube-router-bp7ns                 1/1     Running   0          41m
+kube-system   metrics-server-7556957bb7-xzgm6   1/1     Running   0          41m
+
+
+ps -ef | grep kube-
+
+
+## Delete Cluster
+k0sctl reset --config k0sctl.yaml
+rm -rf /var/lib/kubelet/
+rm -f /usr/local/bin/k0s
+reboot all nodes
+
+
