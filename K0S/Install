@@ -2,6 +2,16 @@ rm /etc/machine-id
 
 systemd-machine-id-setup
 
+echo "
+192.168.100.75 master1 master1.linkdev.local
+192.168.100.76 master2 master2.linkdev.local
+192.168.100.77 master3 master3.linkdev.local
+192.168.100.78 worker1 worker1.linkdev.local
+192.168.100.79 worker2 worker2.linkdev.local
+192.168.100.80 bastion bastion.linkdev.local
+" | sudo tee --append /etc/hosts
+
+
 
 wgte https://github.com/k0sproject/k0sctl/releases/download/v0.17.4/k0sctl-linux-x64
 
