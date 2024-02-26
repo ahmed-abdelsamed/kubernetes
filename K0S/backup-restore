@@ -1,3 +1,3 @@
-k0sctl backup
+env SSH_KNOWN_HOSTS=/dev/null k0sctl backup
 
-k0sctl apply --restore-from /path/to/backup_file.tar.gz
+env SSH_KNOWN_HOSTS=/dev/null k0sctl apply --restore-from /path/to/backup_file.tar.gz
