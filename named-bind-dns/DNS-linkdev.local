@@ -1,0 +1,127 @@
+## /etc/named.conf
+//
+// named.conf
+//
+// Provided by Red Hat bind package to configure the ISC BIND named(8) DNS
+// server as a caching only nameserver (as a localhost DNS resolver only).
+//
+// See /usr/share/doc/bind*/sample/ for example named configuration files.
+//
+
+options {
+//      listen-on port 53 { 127.0.0.1; };
+//      listen-on-v6 port 53 { ::1; };
+        directory       "/var/named";
+        dump-file       "/var/named/data/cache_dump.db";
+        statistics-file "/var/named/data/named_stats.txt";
+        memstatistics-file "/var/named/data/named_mem_stats.txt";
+        secroots-file   "/var/named/data/named.secroots";
+        recursing-file  "/var/named/data/named.recursing";
+        allow-query     { localhost; 192.168.100.0/24; };
+        allow-transfer { none; };
+        forwarders {
+                8.8.8.8;
+                8.8.4.4;
+        };
+        /*
+         - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
+         - If you are building a RECURSIVE (caching) DNS server, you need to enable
+           recursion.
+         - If your recursive DNS server has a public IP address, you MUST enable access
+           control to limit queries to your legitimate users. Failing to do so will
+           cause your server to become part of large scale DNS amplification
+           attacks. Implementing BCP38 within your network would greatly
+           reduce such attack surface
+        */
+        recursion yes;
+
+        dnssec-validation yes;
+
+        managed-keys-directory "/var/named/dynamic";
+        geoip-directory "/usr/share/GeoIP";
+
+        pid-file "/run/named/named.pid";
+        session-keyfile "/run/named/session.key";
+
+        /* https://fedoraproject.org/wiki/Changes/CryptoPolicy */
+        include "/etc/crypto-policies/back-ends/bind.config";
+};
+
+logging {
+        channel default_debug {
+                file "data/named.run";
+                severity dynamic;
+        };
+};
+
+zone "." IN {
+        type hint;
+        file "named.ca";
+};
+
+include "/etc/named.rfc1912.zones";
+include "/etc/named.root.key";
+
+
+//     Add Zones
+zone "linkdev.local" {
+    type master;
+    file "/etc/named/zones/db.linkdev.local";
+  };
+
+zone "100.168.192.in-addr.arpa" {
+
+    type master;
+    file "/etc/named/zones/db.reverse";
+};
+
+###################################################
+#vi /etc/named/zones/db.linkdev.local
+$TTL 1W
+@       IN      SOA     dns.linkdev.local.   root (
+                        2019070700      ; serial
+                        3H              ; refresh (3 hours)
+                        30M             ; retry (30 minutes)
+                        2W              ; expiry (2 weeks)
+                        1W )            ; minimum (1 week)
+
+; Name Server Info
+@       IN      NS      dns.linkdev.local.
+
+; IP address of Name Server
+dns                     IN      A       192.168.100.200
+
+; A - Record Hostname to IP Address
+master-1.rke2.linkdev.local.     IN      A       192.168.100.10
+master-2.rke2.linkdev.local.     IN      A       192.168.100.11
+master-3.rke2.linkdev.local.     IN      A       192.168.100.12
+;
+worker-1.rke2.linkdev.local.     IN      A       192.168.100.13
+worker-2.rke2.linkdev.local.     IN      A       192.168.100.14
+;EOF
+
+########################################################
+#cat  /etc/named/zones/db.reverse
+$TTL 1W
+@       IN      SOA     dns.linkdev.local.   root (
+                        2019070700      ; serial
+                        3H              ; refresh (3 hours)
+                        30M             ; retry (30 minutes)
+                        2W              ; expiry (2 weeks)
+                        1W )            ; minimum (1 week)
+;
+; name servers - NS records
+@                               IN      NS      dns.linkdev.local.
+
+; PTR Records
+200.100.168.192.in-addr.arpa.       IN      PTR     dns.linkdev.local
+;
+10.100.168.192.in-addr.arpa.       IN      PTR     master-1.rke2.linkdev.local
+11.100.168.192.in-addr.arpa.       IN      PTR     master-2.rke2.linkdev.local
+12.100.168.192.in-addr.arpa.       IN      PTR     master-3.rke2.linkdev.local
+;
+13.100.168.192.in-addr.arpa.       IN      PTR     worker-1.rke2.linkdev.local
+14.100.168.192.in-addr.arpa.       IN      PTR     worker-2.rke2.linkdev.local
+;EOF
+
+##############################################################
