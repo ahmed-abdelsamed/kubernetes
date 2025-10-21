@@ -1,0 +1,17 @@
+# new-kind-config.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: my-kind-cluster # Give your cluster a consistent name
+nodes:
+- role: control-plane # The one control plane node
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 8080
+    protocol: TCP
+- role: worker        # Worker node 1
+- role: worker        # Worker node 2 (The added node)
+- role: worker        # Worker node 3 (The third added node)
+- role: worker        # Worker node 4 (The third added node)
+- role: worker        # Worker node 5 (The third added node)
+- role: worker        # Worker node 6 (The third added node)
+# ... add as many worker: nodes as needed
